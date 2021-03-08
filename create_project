@@ -1,0 +1,16 @@
+#!/bin/sh
+
+
+error () { return 1; }
+
+
+FIRST_HALF=$(python ./create_project.py $1)
+if [[ "$FIRST_HALF" == "error" ]]
+then
+    echo "Error"
+    error
+fi
+
+python ./create_project.py
+cd $FIRST_HALF
+
