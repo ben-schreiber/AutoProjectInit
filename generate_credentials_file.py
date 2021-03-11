@@ -14,9 +14,10 @@ file_contents = {
 
 if __name__ == '__main__':
     import os
+    import json
     from pathlib import Path
 
-    file_name = os.path.join(Path(os.path.abspath(__file__)).parent, 'CREDENTIALS.json')
+    file_name = os.path.join(Path(os.path.abspath(__file__)).parent, 'CREDENTIALS4.json')
 
     with open(file_name, 'w') as f:
         json.dump(file_contents, f)
