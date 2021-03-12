@@ -1,11 +1,11 @@
 #!/bin/sh
 
 
-FIRST_HALF=$(python ./create_project.py $1)
-if [[ "$FIRST_HALF" == "error" ]]
+PROJ_DIR=$(python ./create_project.py $1)
+if [[ "$PROJ_DIR" == "error" ]]
 then
     echo "Error"
 else
     python ./create_project.py
-    cd $FIRST_HALF
+    cd $PROJ_DIR
 fi

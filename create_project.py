@@ -1,35 +1,37 @@
 import sys
 import os
 import json
+import platform
 from pathlib import Path
 from github import Github
 
 
-README_FILE = 'README'
-GITIGNORE_FILE = '.gitignore'
-JSON_PROJECT_DIR = 'project_dir'
+README_FILE = 'README.md'
 TEMPLATE_DIR = 'template_files'
+JSON_PROJECT_DIR = 'project_dir'
 JSON_PROJECT_NAME = 'project_name'
 JSON_GITHUB_TOKEN = 'TOKEN'
 GITHUB_CREDENTIALS = 'git_credentials'
 GITHUB_SERVER = 'github.com'
+GITIGNORE_FILE = '.gitignore'
 
 
 class ProjectCreator:
 
-    CREDENTIALS_FILE = os.path.join(Path(os.path.abspath(__file__)).parent, 'CREDENTIALS.json')
+    CURRENT_DIR = Path(os.path.abspath(__file__)).parent
+    CREDENTIALS_FILE = os.path.join(CURRENT_DIR, 'CREDENTIALS.json')
 
     def __init__(self, project_name: str):
         self.project_name: str = project_name
         self.project_dir: str = ProjectCreator.read_json_attribute(JSON_PROJECT_DIR)
         self.project_abs_path: str = os.path.join(self.project_dir, project_name)
-        self.curr_path = Path(os.path.abspath(__file__))
         self.server: str = ''
 
     def push_local_repo(self, remote_link: str):
         """
         Pushes the local repo to the remote
         """
+
         os.chdir(self.project_abs_path)
         os.system(f'git remote add origin {remote_link} >> nul')
         os.system('git branch -M main >> nul')
@@ -55,16 +57,21 @@ class ProjectCreator:
         """
         Inits a local git repository, adds all files to it, and commits
         """
+        if platform.system() == 'Windows':
+            nul_file = 'nul'
+        else:
+            nul_file = '/dev/null'
+
         os.chdir(self.project_abs_path)
-        os.system('git init >> nul')
-        os.system('git add . >> nul')
-        os.system('git commit -m "Initial Commit" >> nul')
+        os.system(f'git init >> {nul_file}')
+        os.system(f'git add . >> {nul_file}')
+        os.system(f'git commit -m "Initial Commit" >> {nul_file}')
 
     def add_init_files(self):
         """
         Adds the README and .gitignore files
         """
-        template_dir = os.path.join(self.curr_path.parent, TEMPLATE_DIR)
+        template_dir = os.path.join(ProjectCreator.CURRENT_DIR, TEMPLATE_DIR)
 
         gitignore_loc = os.path.join(template_dir, GITIGNORE_FILE)
         gitignore_dest = os.path.join(self.project_abs_path, GITIGNORE_FILE)
@@ -94,14 +101,16 @@ class ProjectCreator:
         self.init_local_git()
 
     def second_half(self):
-        print('Which server would you like? (Type the server)\n')
+        print('Which server would you like? (Type the number)\n')
         servers = ProjectCreator.read_json_attribute(GITHUB_CREDENTIALS).keys()
+        servers_options = {}
         for i, _server in enumerate(servers):
             print(f' ({i + 1}) {_server}')
+            servers_options[str(i + 1)] = _server
         choice = input()
-        if choice not in set(servers):
+        if choice not in servers_options:
             error_handling()
-        self.server = choice
+        self.server = servers_options[choice]
         remote_link = self.init_remote_git()
         self.push_local_repo(remote_link)
 
