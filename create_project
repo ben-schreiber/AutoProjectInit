@@ -6,6 +6,6 @@ if [[ "$PROJ_DIR" == "error" ]]
 then
     echo "Error"
 else
-    python ./create_project.py
+    python ./create_project.py $1 "second"
     cd $PROJ_DIR
 fi

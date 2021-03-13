@@ -4,6 +4,9 @@ import json
 import platform
 from pathlib import Path
 from github import Github
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 README_FILE = 'README.md'
@@ -23,9 +26,10 @@ class ProjectCreator:
 
     def __init__(self, project_name: str):
         self.project_name: str = project_name
-        self.project_dir: str = ProjectCreator.read_json_attribute(JSON_PROJECT_DIR)
-        self.project_abs_path: str = os.path.join(self.project_dir, project_name)
+        self.project_dir: str = os.getenv('PROJECT_DIRECTORY')
+        self.project_abs_path: str = os.path.join(self.project_dir, self.project_name)
         self.server: str = ''
+        self.servers: dict = {}
 
     def push_local_repo(self, remote_link: str):
         """
@@ -42,7 +46,7 @@ class ProjectCreator:
         Goes to github, inits a repo with the project name, returns the link
         Throws a ValueError if a repo already exists with that name
         """
-        github_token = ProjectCreator.read_json_attribute(GITHUB_CREDENTIALS)[self.server]
+        github_token = self.servers[self.server]
         if self.server == GITHUB_SERVER:
             g = Github(github_token)
             user = g.get_user()
@@ -99,37 +103,26 @@ class ProjectCreator:
             error_handling()
         self.add_init_files()
         self.init_local_git()
+        os.environ[JSON_PROJECT_NAME] = self.project_name
+
+    def process_servers(self):
+        env_info = os.environ.get('GITHUB_CREDENTIALS')  # Come in the form: [(server, token), ...]
+        server_token_pairs = env_info.split(';')
+        for pair in server_token_pairs:
+            server, token = pair.strip()[1:-1].split(',')
+            self.servers[server.strip()] = token.strip()
 
     def second_half(self):
         print('Which server would you like? (Type the number)\n')
-        servers = ProjectCreator.read_json_attribute(GITHUB_CREDENTIALS).keys()
-        servers_options = {}
-        for i, _server in enumerate(servers):
+        self.process_servers()
+        servers_list = list(self.servers.keys())
+        for i, _server in enumerate(servers_list):
             print(f' ({i + 1}) {_server}')
-            servers_options[str(i + 1)] = _server
-        choice = input()
-        if choice not in servers_options:
+        choice = eval(input())
+        if choice > len(servers_list) or choice < 1:
             error_handling()
-        self.server = servers_options[choice]
-        remote_link = self.init_remote_git()
-        self.push_local_repo(remote_link)
-
-
-    @staticmethod
-    def read_json_attribute(attribute):
-        with open(ProjectCreator.CREDENTIALS_FILE) as f:
-            data = json.load(f)
-            return data[attribute]
-
-    @staticmethod
-    def write_json_attribute(attribute_name, value):
-        with open(ProjectCreator.CREDENTIALS_FILE, 'r') as f:
-            data = json.load(f)
-
-        data[attribute_name] = value
-
-        with open(ProjectCreator.CREDENTIALS_FILE, 'w') as f2:
-            json.dump(data, f2)
+        self.server = servers_list[choice - 1]
+        self.push_local_repo(self.init_remote_git())
 
 
 def error_handling():
@@ -140,10 +133,9 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         pc = ProjectCreator(sys.argv[1])
         pc.first_half()
-        ProjectCreator.write_json_attribute(JSON_PROJECT_NAME, sys.argv[1])
 
-    elif len(sys.argv) == 1:
-        pc = ProjectCreator(ProjectCreator.read_json_attribute(JSON_PROJECT_NAME))
+    elif len(sys.argv) == 3:
+        pc = ProjectCreator(sys.argv[1])
         pc.second_half()
 
     else:
