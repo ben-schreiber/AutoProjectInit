@@ -6,8 +6,6 @@ from pathlib import Path
 from github import Github
 from dotenv import load_dotenv
 
-load_dotenv()
-
 
 README_FILE = 'README.md'
 TEMPLATE_DIR = 'template_files'
@@ -21,10 +19,8 @@ GITIGNORE_FILE = '.gitignore'
 
 class ProjectCreator:
 
-    CURRENT_DIR = Path(os.path.abspath(__file__)).parent
-    CREDENTIALS_FILE = os.path.join(CURRENT_DIR, 'CREDENTIALS.json')
-
     def __init__(self, project_name: str):
+        self.current_dir: str = Path(os.path.abspath(__file__)).parent
         self.project_name: str = project_name
         self.project_dir: str = os.getenv('PROJECT_DIRECTORY')
         self.project_abs_path: str = os.path.join(self.project_dir, self.project_name)
@@ -32,20 +28,12 @@ class ProjectCreator:
         self.servers: dict = {}
 
     def push_local_repo(self, remote_link: str):
-        """
-        Pushes the local repo to the remote
-        """
-
         os.chdir(self.project_abs_path)
-        os.system(f'git remote add origin {remote_link} >> nul')
-        os.system('git branch -M main >> nul')
-        os.system('git push -u origin main >> nul')
+        os.system(f'git remote add origin {remote_link}')
+        os.system('git branch -M main')
+        os.system('git push -u origin main')
 
     def init_remote_git(self) -> str:
-        """
-        Goes to github, inits a repo with the project name, returns the link
-        Throws a ValueError if a repo already exists with that name
-        """
         github_token = self.servers[self.server]
         if self.server == GITHUB_SERVER:
             g = Github(github_token)
@@ -58,24 +46,13 @@ class ProjectCreator:
         return f'https://{self.server}/{user.login}/{self.project_name}.git'
 
     def init_local_git(self):
-        """
-        Inits a local git repository, adds all files to it, and commits
-        """
-        if platform.system() == 'Windows':
-            nul_file = 'nul'
-        else:
-            nul_file = '/dev/null'
-
         os.chdir(self.project_abs_path)
-        os.system(f'git init >> {nul_file}')
-        os.system(f'git add . >> {nul_file}')
-        os.system(f'git commit -m "Initial Commit" >> {nul_file}')
+        os.system(f'git init')
+        os.system(f'git add .')
+        os.system(f'git commit -m "Initial Commit"')
 
     def add_init_files(self):
-        """
-        Adds the README and .gitignore files
-        """
-        template_dir = os.path.join(ProjectCreator.CURRENT_DIR, TEMPLATE_DIR)
+        template_dir = os.path.join(self.current_dir, TEMPLATE_DIR)
 
         gitignore_loc = os.path.join(template_dir, GITIGNORE_FILE)
         gitignore_dest = os.path.join(self.project_abs_path, GITIGNORE_FILE)
@@ -86,24 +63,32 @@ class ProjectCreator:
         os.system(f'cp {readme_loc} {readme_dest}')
 
     def create_folder(self) -> bool:
-        """
-        Given the project name, attempts to create and cd into the folder.
-        Returns True iff it successfully creates a folder and cds into it.
-        If a folder with the project_name already exists, then return False
-        """
         if os.path.isdir(self.project_abs_path):
             return False
-        os.system(f'mkdir {self.project_abs_path}')
-        print(self.project_abs_path)
+        os.makedirs(self.project_abs_path)
         return True
 
+    def get_server_choice(self):
+        msg: str = 'Which server would you like? (Type the number)'
+        print('\n' + '=' * len(msg))
+        print(msg + '\n')
+        self.process_servers()
+        servers_list = list(self.servers.keys())
+        for i, _server in enumerate(servers_list):
+            print(f' ({i + 1}) {_server}')
+        print('=' * len(msg))
+        choice = eval(input())
+        if choice > len(servers_list) or choice < 1:
+            error_handling('Invalid Server Choice.')
+        self.server = servers_list[choice - 1]
 
-    def first_half(self):
+    def run(self):
         if not self.create_folder():
-            error_handling()
+            error_handling(f'Project with the name `{self.project_name}` already exists')
         self.add_init_files()
         self.init_local_git()
-        os.environ[JSON_PROJECT_NAME] = self.project_name
+        self.get_server_choice()
+        self.push_local_repo(self.init_remote_git())
 
     def process_servers(self):
         env_info = os.environ.get('GITHUB_CREDENTIALS')  # Come in the form: [(server, token), ...]
@@ -112,31 +97,27 @@ class ProjectCreator:
             server, token = pair.strip()[1:-1].split(',')
             self.servers[server.strip()] = token.strip()
 
-    def second_half(self):
-        print('Which server would you like? (Type the number)\n')
-        self.process_servers()
-        servers_list = list(self.servers.keys())
-        for i, _server in enumerate(servers_list):
-            print(f' ({i + 1}) {_server}')
-        choice = eval(input())
-        if choice > len(servers_list) or choice < 1:
-            error_handling()
-        self.server = servers_list[choice - 1]
-        self.push_local_repo(self.init_remote_git())
 
+def error_handling(msg: str = ''):
+    if len(msg) > 6:
+        print('=' * len(msg))
+    else:
+        print('=' * 6)
 
-def error_handling():
-    print('error')
+    print('Error!')
+    if msg:
+        print(msg)
+
+    if len(msg) > 6:
+        print('=' * len(msg))
+    else:
+        print('=' * 6)
     sys.exit(1)
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
+        load_dotenv()
         pc = ProjectCreator(sys.argv[1])
-        pc.first_half()
-
-    elif len(sys.argv) == 3:
-        pc = ProjectCreator(sys.argv[1])
-        pc.second_half()
-
+        pc.run()
     else:
-        error_handling()
+        error_handling('USAGE: source create_project <project_name>')

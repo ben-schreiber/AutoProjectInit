@@ -1,11 +1,5 @@
 #!/bin/sh
 
-
-PROJ_DIR=$(python ./create_project.py $1)
-if [[ "$PROJ_DIR" == "error" ]]
-then
-    echo "Error"
-else
-    python ./create_project.py $1 "second"
-    cd $PROJ_DIR
-fi
+source .env
+python ./create_project.py $1
+cd $PROJECT_DIRECTORY$1
