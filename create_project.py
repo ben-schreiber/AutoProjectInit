@@ -9,10 +9,6 @@ from dotenv import load_dotenv
 
 README_FILE = 'README.md'
 TEMPLATE_DIR = 'template_files'
-JSON_PROJECT_DIR = 'project_dir'
-JSON_PROJECT_NAME = 'project_name'
-JSON_GITHUB_TOKEN = 'TOKEN'
-GITHUB_CREDENTIALS = 'git_credentials'
 GITHUB_SERVER = 'github.com'
 GITIGNORE_FILE = '.gitignore'
 
