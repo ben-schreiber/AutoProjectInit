@@ -34,7 +34,7 @@ source create_project <project_name>
 ```
 For Windows:
 ```PowerShell
-python create_project.py -p <project_name>
+python .\create_project.py -p <project_name>
 ```
 
 ## `.env` File Format
