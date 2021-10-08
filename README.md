@@ -1,5 +1,5 @@
 # Project Auto Initializer
-**Note:** This script can only be run on a `bash` terminal. If you are using a Windows machine, you can run this script from a `bash` emulator such as the Git Bash Terminal.
+**Note:** This script can only be run on a `bash` terminal. If you are using a Windows machine, you can simply just run the `create_project.py` file from PowerShell.
 ## Overview
 This script accomplishes the following:\
 Given a github (server, token) pair and your project directory, it will run a script that
@@ -28,8 +28,13 @@ touch .env
 
 Now, open the .env file and add in the necessary items (see below for more details).
 ## Usage
+For `bash`:
 ```bash
 source create_project <project_name>
+```
+For Windows:
+```PowerShell
+python create_project.py -p <project_name>
 ```
 
 ## `.env` File Format

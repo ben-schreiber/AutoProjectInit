@@ -15,13 +15,14 @@ GITIGNORE_FILE = '.gitignore'
 
 class ProjectCreator:
 
-    def __init__(self, project_name: str):
-        self.current_dir: str = Path(os.path.abspath(__file__)).parent
-        self.project_name: str = project_name
-        self.project_dir: str = os.getenv('PROJECT_DIRECTORY')
-        self.project_abs_path: str = os.path.join(self.project_dir, self.project_name)
-        self.server: str = ''
-        self.servers: dict = {}
+    def __init__(self, project_name: str, run_directly: str):
+        self.current_dir= Path(os.path.abspath(__file__)).parent
+        self.project_name = project_name
+        self.project_dir = os.getenv('PROJECT_DIRECTORY')
+        self.project_abs_path = os.path.join(self.project_dir, self.project_name)
+        self.server = ''
+        self.servers = {}
+        self.run_directly = run_directly
 
     def push_local_repo(self, remote_link: str):
         os.chdir(self.project_abs_path)
@@ -85,6 +86,8 @@ class ProjectCreator:
         self.init_local_git()
         self.get_server_choice()
         self.push_local_repo(self.init_remote_git())
+        if self.run_directly == 'yes':
+            print(f'Your project was initialized. Run the following command to change to that directory:\n\n\tcd {self.project_abs_path}\n')
 
     def process_servers(self):
         env_info = os.environ.get('GITHUB_CREDENTIALS')  # Come in the form: [(server, token), ...]
@@ -111,9 +114,28 @@ def error_handling(msg: str = ''):
     sys.exit(1)
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        load_dotenv()
-        pc = ProjectCreator(sys.argv[1])
-        pc.run()
-    else:
-        error_handling('USAGE: source create_project <project_name>')
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description='CLI for the AutoProjectInit script')
+    parser.add_argument(
+        '-p', 
+        '--project_name',  
+        type=str, 
+        required=True, 
+        dest='project_name', 
+        help='The name of the project directory you wish to create'
+    )
+    parser.add_argument(
+        '--run_directly',
+        dest='run_directly',
+        choices=['yes', 'no'],
+        type=str,
+        default='yes',
+        help='Set to False if this file is being run from a script'    
+    )
+    args = parser.parse_args()
+    print(args.run_directly)
+    load_dotenv()
+    pc = ProjectCreator(project_name=args.project_name, run_directly=args.run_directly)
+    pc.run()
+    

@@ -1,5 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 
 source .env
-python ./create_project.py $1
+python ./create_project.py -p $1 --run_directly no
 cd $PROJECT_DIRECTORY$1
