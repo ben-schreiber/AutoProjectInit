@@ -1,7 +1,7 @@
 import sys
 import os
-import json
-import platform
+
+from shutil import copy2
 from pathlib import Path
 from github import Github
 from dotenv import load_dotenv
@@ -50,13 +50,13 @@ class ProjectCreator:
     def add_init_files(self):
         template_dir = os.path.join(self.current_dir, TEMPLATE_DIR)
 
-        gitignore_loc = os.path.join(template_dir, GITIGNORE_FILE)
+        gitignore_src = os.path.join(template_dir, GITIGNORE_FILE)
         gitignore_dest = os.path.join(self.project_abs_path, GITIGNORE_FILE)
-        os.system(f'cp {gitignore_loc} {gitignore_dest}')
+        copy2(gitignore_src, gitignore_dest)
 
-        readme_loc = os.path.join(template_dir, README_FILE)
+        readme_src = os.path.join(template_dir, README_FILE)
         readme_dest = os.path.join(self.project_abs_path, README_FILE)
-        os.system(f'cp {readme_loc} {readme_dest}')
+        copy2(readme_src, readme_dest)
 
     def create_folder(self) -> bool:
         if os.path.isdir(self.project_abs_path):
